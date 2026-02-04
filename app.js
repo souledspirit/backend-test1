@@ -3,11 +3,15 @@ const path = require("path");
 const app = express();
 const port = 3000;
 const fs = require("fs");
+const morgan = require("morgan");
+const cors = require("cors");
+app.use(morgan("dev"));
 
 const logger = (req, res, next) => {
   console.log(`${req.method}  request to ${req.url}`);
   next();
 };
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(logger);
