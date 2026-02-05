@@ -44,6 +44,27 @@ app.post("/api/submit-form", (req, res) => {
   res.render("sucess", { data: req.body });
 });
 
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve users" });
+  }
+});
+
+app.get("/update", async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      { user: "test@example1.com" },
+      { email: "john_updated@example.com" },
+    );
+    res.send(`User updated: ${user}`);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
 app.post("/api/send-data", async (req, res) => {
   const data = req.body;
   console.log(data);
