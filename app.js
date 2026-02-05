@@ -7,6 +7,10 @@ const morgan = require("morgan");
 const cors = require("cors");
 app.use(morgan("dev"));
 
+const db = require("./config/db");
+const User = require("./models/user");
+app.use(cors());
+
 const logger = (req, res, next) => {
   console.log(`${req.method}  request to ${req.url}`);
   next();
@@ -40,11 +44,22 @@ app.post("/api/submit-form", (req, res) => {
   res.render("sucess", { data: req.body });
 });
 
-app.post("/api/send-data", (req, res) => {
+app.post("/api/send-data", async (req, res) => {
   const data = req.body;
   console.log(data);
 
-  res.json({ message: "data received successfully" });
+  const user = new User({
+    user: data.username,
+    email: data.email,
+    password: data.password,
+  });
+
+  try {
+    await user.save();
+    res.json({ message: "data received successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to save user data" });
+  }
 });
 
 console.log(path.basename(__filename) + " is running...");
