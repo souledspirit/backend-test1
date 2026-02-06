@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(logger);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.render("home.ejs");
 });
 
 app.get("/api/data", (req, res) => {
@@ -39,6 +39,30 @@ app.get("/home", (req, res) => {
 app.get("/form", (req, res) => {
   res.render("form");
 });
+
+app.get("/signup", (req, res) => {
+  res.render("signup");
+});
+
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.get("/api/login-check", async (req, res) => {
+  const { email, pasword } = req.query;
+  try {
+    const user = User.findOne({ email: email, password: pasword });
+    if (user) {
+      res.status(200).json({ message: "Login successful" });
+      res.redirect("/");
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Failed to check login" });
+  }
+});
+
 app.post("/api/submit-form", (req, res) => {
   const formData = req.body;
   res.render("sucess", { data: req.body });
@@ -65,19 +89,20 @@ app.get("/update", async (req, res) => {
   }
 });
 
-app.post("/api/send-data", async (req, res) => {
+app.post("/api/sign-up", async (req, res) => {
   const data = req.body;
   console.log(data);
 
   const user = new User({
-    user: data.username,
+    user: data.name,
     email: data.email,
     password: data.password,
   });
 
   try {
     await user.save();
-    res.json({ message: "data received successfully" });
+    res.status(201);
+    res.redirect("/login");
   } catch (error) {
     res.status(500).json({ error: "Failed to save user data" });
   }
