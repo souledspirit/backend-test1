@@ -5,6 +5,8 @@ const port = 3000;
 const fs = require("fs");
 const morgan = require("morgan");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
+const jsonWebToken = require("jsonwebtoken");
 app.use(morgan("dev"));
 
 const db = require("./config/db");
@@ -49,17 +51,22 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/api/login-check", async (req, res) => {
-  const { email, pasword } = req.query;
+  const { email, password } = req.body;
   try {
-    const user = User.findOne({ email: email, password: pasword });
-    if (user) {
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    } else {
       res.status(200).json({ message: "Login successful" });
       res.redirect("/");
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
     }
-  } catch (error) {
-    res.status(500).json({ error: "Failed to check login" });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+    res.redirect("/login");
   }
 });
 
@@ -92,11 +99,11 @@ app.get("/update", async (req, res) => {
 app.post("/api/sign-up", async (req, res) => {
   const data = req.body;
   console.log(data);
-
+  const hashedPassword = await bcrypt.hash(data.password, 10);
   const user = new User({
     user: data.name,
     email: data.email,
-    password: data.password,
+    password: hashedPassword,
   });
 
   try {
