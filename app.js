@@ -50,23 +50,32 @@ app.get("/login", (req, res) => {
   res.render("login");
 });
 
-app.get("/api/login-check", async (req, res) => {
+app.post("/api/login-check", async (req, res) => {
   const { email, password } = req.body;
+
   try {
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ error: "Invalid email or password" });
-    } else {
-      res.status(200).json({ message: "Login successful" });
-      res.redirect("/");
     }
+
+    const token = jsonWebToken.sign({ email: user.email }, "your_secret_key", {
+      expiresIn: "1h",
+    });
+
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Internal server error" });
-    res.redirect("/login");
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
